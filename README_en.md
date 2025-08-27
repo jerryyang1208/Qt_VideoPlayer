@@ -1,8 +1,12 @@
+<div align="right">
+  <a href="README.md">简体中文</a>
+</div>
+
 ## A Simple Audio-Video Player Based on Qt 6.8.2
 
-<span style="display: inline-block; background-color: #3b82f6; color: white; padding: 3px 8px; border-radius: 4px; margin: 0 4px 4px 0; font-size: 12px;">License MIT</span>
-<span style="display: inline-block; background-color: #2563eb; color: white; padding: 3px 8px; border-radius: 4px; margin: 0 4px 4px 0; font-size: 12px;">C++ 17</span>
-<span style="display: inline-block; background-color: #1d4ed8; color: white; padding: 3px 8px; border-radius: 4px; margin: 0 4px 4px 0; font-size: 12px;">Platform Windows</span>
+<span style="background:#3b82f6;color:white;padding:2px 6px;border-radius:3px;font-size:12px;margin-right:4px;">License MIT</span>
+<span style="background:#2563eb;color:white;padding:2px 6px;border-radius:3px;font-size:12px;margin-right:4px;">C++ 17</span>
+<span style="background:#1d4ed8;color:white;padding:2px 6px;border-radius:3px;font-size:12px;">Platform Windows</span>
 
 `Qt_VideoPlayer` is a simple audio-video player developed with Qt 6.8.2 and C++17. Currently, it runs successfully only in the Qt Creator environment. It aims to provide a concise and user-friendly graphical interface while demonstrating the integration of Qt framework with multimedia processing libraries. The actual running interface is as follows:
 
