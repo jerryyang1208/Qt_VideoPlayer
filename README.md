@@ -1,6 +1,11 @@
 ## 基于 Qt 6.8.2 开发的简易音视频播放器
 
+<span style="display: inline-block; background-color: #3b82f6; color: white; padding: 3px 8px; border-radius: 4px; margin: 0 4px 4px 0; font-size: 12px;">License MIT</span>
+<span style="display: inline-block; background-color: #2563eb; color: white; padding: 3px 8px; border-radius: 4px; margin: 0 4px 4px 0; font-size: 12px;">C++ 17</span>
+<span style="display: inline-block; background-color: #1d4ed8; color: white; padding: 3px 8px; border-radius: 4px; margin: 0 4px 4px 0; font-size: 12px;">Platform Windows</span>
+
 `Qt_VideoPlayer` 是一款基于 Qt 6.8.2、C++17 开发的简易音视频播放器，目前仅成功适用于 Qt Creator 环境运行。它旨在提供简洁易用的图形界面，同时展示 Qt 框架与多媒体处理库的结合实践，实际运行界面如下：
+
 ![程序运行截图](Resource/program-run.png)
 
 > *注意：本项目主要用于个人学习 Qt 多媒体开发的设计思路分享，而非打造一个功能完备、可以替代 VLC 或 PotPlayer 等成熟产品的日常播放器。*
