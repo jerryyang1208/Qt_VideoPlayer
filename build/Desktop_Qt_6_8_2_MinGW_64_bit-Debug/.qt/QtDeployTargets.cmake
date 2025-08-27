@@ -1,0 +1,3 @@
+set(__QT_DEPLOY_TARGET_VideoPlayer_FILE E:/desktop/YXR/Audio_video_tech/QT/Qt_Projects/VideoPlayer/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/VideoPlayer.exe)
+set(__QT_DEPLOY_TARGET_VideoPlayer_TYPE EXECUTABLE)
+set(__QT_DEPLOY_TARGET_VideoPlayer_RUNTIME_DLLS E:/desktop/YXR/Audio_video_tech/QT/6.8.2/mingw_64/bin/Qt6MultimediaWidgets.dll;E:/desktop/YXR/Audio_video_tech/QT/6.8.2/mingw_64/bin/Qt6Widgets.dll;E:/desktop/YXR/Audio_video_tech/QT/6.8.2/mingw_64/bin/Qt6Multimedia.dll;E:/desktop/YXR/Audio_video_tech/QT/6.8.2/mingw_64/bin/Qt6Network.dll;E:/desktop/YXR/Audio_video_tech/QT/6.8.2/mingw_64/bin/Qt6Gui.dll;E:/desktop/YXR/Audio_video_tech/QT/6.8.2/mingw_64/bin/Qt6Core.dll)

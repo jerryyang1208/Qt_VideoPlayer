@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Resource/nextSong.png</file>
+        <file>Resource/openDir.png</file>
+        <file>Resource/play.png</file>
+        <file>Resource/pause.png</file>
+        <file>Resource/playlist_order.png</file>
+        <file>Resource/playlist_random.png</file>
+        <file>Resource/playlist_repeat.png</file>
+        <file>Resource/playlist-repeatOnce.png</file>
+        <file>Resource/prevSong.png</file>
+        <file>Resource/volume.png</file>
+    </qresource>
+</RCC>
