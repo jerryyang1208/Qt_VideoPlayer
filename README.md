@@ -4,9 +4,9 @@
 
 ## 基于 Qt 6.8.2 开发的简易音视频播放器
 
-<span style="background:#3b82f6;color:white;padding:2px 6px;border-radius:3px;font-size:12px;margin-right:4px;">License MIT</span>
-<span style="background:#2563eb;color:white;padding:2px 6px;border-radius:3px;font-size:12px;margin-right:4px;">C++ 17</span>
-<span style="background:#1d4ed8;color:white;padding:2px 6px;border-radius:3px;font-size:12px;">Platform Windows</span>
+| 📄 License | 💻 Language | 🖥️ Platform |
+|------------|---------------|---------------|
+|      MIT      |      C++ 17     |   Windows    |
 
 `Qt_VideoPlayer` 是一款基于 Qt 6.8.2、C++17 开发的简易音视频播放器，目前仅成功适用于 Qt Creator 环境运行。它旨在提供简洁易用的图形界面，同时展示 Qt 框架与多媒体处理库的结合实践，实际运行界面如下：
 
