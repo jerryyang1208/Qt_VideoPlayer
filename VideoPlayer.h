@@ -23,6 +23,9 @@ public:
     VideoPlayer(QWidget *parent = nullptr);
     ~VideoPlayer();
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private slots:
     void openDirectory();
     void onMusicListDoubleClicked(const QModelIndex &index);

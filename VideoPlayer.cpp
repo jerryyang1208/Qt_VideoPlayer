@@ -95,8 +95,35 @@ void VideoPlayer::initVideoWindow()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_videoWidget);
 
+    // 安装事件过滤器监控视频窗口事件
+    m_videoWindow->installEventFilter(this);
+
     // 默认隐藏视频窗口
     m_videoWindow->hide();
+}
+
+// 实现事件过滤器处理视频窗口关闭事件
+bool VideoPlayer::eventFilter(QObject *watched, QEvent *event)
+{
+    // 判断是否是视频窗口的关闭事件
+    if (watched == m_videoWindow && event->type() == QEvent::Close) {
+        // 阻止窗口真正关闭，改为隐藏
+        event->ignore();
+        m_videoWindow->hide();
+
+        // 暂停播放
+        if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState) {
+            m_mediaPlayer->pause();
+        }
+
+        // 更新播放状态标记
+        m_isVideoPlaying = false;
+
+        return true; // 表示事件已处理
+    }
+
+    // 其他事件交给父类处理
+    return QWidget::eventFilter(watched, event);
 }
 
 // 判断文件是否为视频
@@ -180,6 +207,14 @@ void VideoPlayer::onMusicListDoubleClicked(const QModelIndex &index)
     ui->musicListView->setCurrentIndex(index);
     currentSongIndex = index.row();
     m_isPlayCompleted = false;  // 重置完成标记
+
+    // 强制检查文件类型并显示视频窗口
+    bool isVideo = isVideoFile(filePath);
+    if (isVideo) {
+        m_videoWindow->show();
+        m_isVideoPlaying = true;
+    }
+
     qInfo() << "选中播放:" << fileName;
 }
 
@@ -190,6 +225,24 @@ int VideoPlayer::getCurrentSongIndex() const
         return -1;
     }
     return currentSongIndex;
+}
+
+// 播放/暂停按钮
+void VideoPlayer::playPause()
+{
+    if (m_listModel->rowCount() == 0 || currentSongIndex == -1) return;
+
+    if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState) {
+        m_mediaPlayer->pause();
+    } else {
+        m_mediaPlayer->play();
+        // 播放时检查是否为视频文件，若是则显示视频窗口
+        QString currentPath = m_mediaPlayer->source().toLocalFile();
+        if (isVideoFile(currentPath)) {
+            m_videoWindow->show();
+            m_isVideoPlaying = true;
+        }
+    }
 }
 
 // 切换上一项按钮
@@ -254,18 +307,6 @@ qreal VideoPlayer::linearToLogVolume(int linearVolume)
 void VideoPlayer::adjustVolume(int value)
 {
     m_audioOutput->setVolume(linearToLogVolume(value));
-}
-
-// 播放/暂停按钮
-void VideoPlayer::playPause()
-{
-    if (m_listModel->rowCount() == 0 || currentSongIndex == -1) return;
-
-    if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState) {
-        m_mediaPlayer->pause();
-    } else {
-        m_mediaPlayer->play();
-    }
 }
 
 void VideoPlayer::updateDurationLab(qint64 duration)
