@@ -8,7 +8,7 @@
 |:----------:|:-----------:|:-----------:|
 |    MIT     |   C++ 17    |   Windows   |
 
-`Qt_VideoPlayer` is a simple audio-video player developed with Qt 6.8.2 and C++17. Currently, it runs successfully only in the Qt Creator environment. It aims to provide a concise and user-friendly graphical interface while demonstrating the integration of Qt framework with multimedia processing libraries. The actual running interface is as follows:
+`Qt_VideoPlayer` is a simple audio-video player developed based on Qt 6.8.2 and C++17, currently running successfully in the Qt Creator environment. It aims to provide a clean and user-friendly graphical interface while demonstrating the integration of the Qt framework with multimedia processing libraries. The actual running interface is as follows:
 
 ![Program Running Screenshot](Resource/program-run.png)
 
@@ -18,12 +18,12 @@ Detailed project introduction and tutorial: https://zhuanlan.zhihu.com/p/1929289
 
 ## Features
 
-- Feature 1: Implemented basic player UI layout and standardized naming.
-- Feature 2: Read media files from local folders into the player list; double-click to play audio or video, supporting common audio and video formats.
-- Feature 3: Automatically identify whether the current media is audio or video. When playing audio, the video window is hidden by default; when playing video, the window is displayed and the media is rendered to it.
-- Feature 4: Implemented button switching logic, including automatic switch to next item after playback, previous/next track button interaction, and highlight tracking of current playing item in the list.
-- Feature 5: Rich button control logic, including media play/pause, volume adjustment, progress bar dragging, and duration display.
-- Feature 6: Custom window closing event. When closing the video window during playback, the play button, audio, progress bar, and time label will pause synchronously. The window will reappear when clicking the play button again or double-clicking a video file in the list, ensuring the video window synchronizes with playback operations.
+- Feature 1: Implements basic player UI layout and standardized naming conventions.
+- Feature 2: Reads local folder media files into the player list, supports double-click to play audio or video, and compatible with common media formats playback.
+- Feature 3: Automatically identifies whether the current media is audio or video. The video window is hidden by default when playing audio, and only displayed when playing video, rendering the media content in real-time.
+- Feature 4: Implements playback mode switching logic, including automatic switch after playback completion (with three modes: single-loop, sequential playback, and random playback), previous/next track buttons, and highlight tracking of current playing item in the list.
+- Feature 5: Rich button control logic, including play/pause, volume adjustment, progress bar dragging to change playback position, and display of total media duration and current playback progress.
+- Feature 6: Custom window closing event. When closing a playing video window, the play button, audio, progress bar, and time labels will synchronize to pause state. The window will reappear when clicking the play button or double-clicking a video file in the list, ensuring the video window synchronizes with playback operations.
 
 ## Planned Features
 
@@ -33,7 +33,10 @@ This project will continue to be improved with more new features and UI interact
 
 ## Contact & Inquiries
 
-For more detailed analysis or questions about the project, please refer to the author's Zhihu blog https://www.zhihu.com/people/13-73-62-89-19
-Email: 2022280099@email.szu.edu.cn. Welcome to submit issues with suggestions for improvements!
+Author's blog: https://www.zhihu.com/people/13-73-62-89-19
+
+Email: 2022280099@email.szu.edu.cn
+
+This project will continue to be improved with more new features and UI interactions. Welcome to submit issues with suggestions for modifications and improvements!
 
 Thank you for your attention and support!
