@@ -19,12 +19,14 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     , m_isPlayCompleted(false)
     , m_isVideoPlaying(false)
     , m_timer(new QTimer(this))
+    , m_playMode(Order)
 {
     ui->setupUi(this);
     setWindowTitle("音视频播放器");
     ui->musicListView->setModel(m_listModel);
     ui->volumeBar->setVisible(false);
     ui->playBtn->setIcon(QIcon(":/Resource/play.png"));
+    ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_order.png"));
 
     // 初始化支持的音视频格式
     m_supportedAudioFormats << "mp3" << "wav" << "ogg" << "flac" << "aac" << "m4a";
@@ -65,6 +67,7 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     connect(ui->volumeBar, &QSlider::sliderMoved, this, &VideoPlayer::adjustVolume);
     connect(ui->musicListView, &QListView::doubleClicked, this, &VideoPlayer::onMusicListDoubleClicked);
     connect(ui->playSlider, &QSlider::sliderMoved, this, &VideoPlayer::seekPosition);
+    connect(ui->playModeBtn, &QPushButton::clicked, this, &VideoPlayer::onPlayModeClicked);
 }
 
 VideoPlayer::~VideoPlayer() {
@@ -165,6 +168,22 @@ void VideoPlayer::updatePlayButtonIcon(QMediaPlayer::PlaybackState state)
     }
 }
 
+// 更新播放模式按钮图标
+void VideoPlayer::updatePlayModeIcon()
+{
+    switch (m_playMode) {
+    case Order:
+        ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_order.png"));
+        break;
+    case Random:
+        ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_random.png"));
+        break;
+    case RepeatOne:
+        ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_repeat.png"));
+        break;
+    }
+}
+
 // 打开音视频文件夹
 void VideoPlayer::openDirectory()
 {
@@ -243,6 +262,14 @@ void VideoPlayer::playPause()
             m_isVideoPlaying = true;
         }
     }
+}
+
+// 播放模式按钮
+void VideoPlayer::onPlayModeClicked()
+{
+    // 切换播放模式（循环切换）
+    m_playMode = static_cast<PlayMode>((m_playMode + 1) % 3);
+    updatePlayModeIcon();
 }
 
 // 切换上一项按钮
@@ -353,7 +380,30 @@ void VideoPlayer::autoSwitchToNext()
     int currentIndex = getCurrentSongIndex();
     if (currentIndex == -1 || m_listModel->rowCount() == 0) return;
 
-    int nextIndex = (currentIndex + 1) % m_listModel->rowCount();
+    int nextIndex = currentIndex;  // 默认保持当前索引
+
+    switch (m_playMode) {
+    case Order:
+        // 顺序播放：切换到下一首，最后一首结束后回到第一首
+        nextIndex = (currentIndex + 1) % m_listModel->rowCount();
+        break;
+
+    case Random:
+        // 随机播放：随机选择一首不同的歌曲
+        if (m_listModel->rowCount() > 1) {
+            srand(QTime::currentTime().msecsSinceStartOfDay() % 1000000);
+            do {
+                nextIndex = rand() % m_listModel->rowCount();
+            } while (nextIndex == currentIndex);  // 确保不重复播放当前歌曲
+        }
+        break;
+
+    case RepeatOne:
+        // 单曲循环：保持当前索引
+        nextIndex = currentIndex;
+        break;
+    }
+
     QModelIndex nextModelIndex = m_listModel->index(nextIndex, 0);
     ui->musicListView->setCurrentIndex(nextModelIndex);
 
@@ -362,8 +412,14 @@ void VideoPlayer::autoSwitchToNext()
     QString fileName = fileInfo.fileName();
 
     m_isAutoSwitch = true;
-    nextSong();
+    // 单曲循环时需要先停止当前播放再重新开始
+    if (m_playMode == RepeatOne) {
+        m_mediaPlayer->stop();
+    }
+    m_mediaPlayer->setSource(QUrl::fromLocalFile(nextFilePath));
+    m_mediaPlayer->play();
+    currentSongIndex = nextIndex;
     m_isAutoSwitch = false;
 
-    qInfo() << "播放结束，自动切换下一项:" << fileName;
+    qInfo() << "自动切换到:" << fileName;
 }

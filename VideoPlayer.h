@@ -23,6 +23,13 @@ public:
     VideoPlayer(QWidget *parent = nullptr);
     ~VideoPlayer();
 
+    // 播放模式枚举
+    enum PlayMode {
+        Order,      // 顺序播放
+        Random,     // 随机播放
+        RepeatOne   // 单曲循环
+    };
+
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
@@ -41,6 +48,7 @@ private slots:
     void autoSwitchToNext();
     void checkPlayCompletion();
     void onCurrentMediaChanged(const QUrl &url); // 处理当前媒体文件变化
+    void onPlayModeClicked();  // 播放模式按钮点击切换
 
 private:
     Ui::VideoPlayer *ui;
@@ -58,6 +66,8 @@ private:
     bool m_isAutoSwitch;   // 标记是否为自动切歌（非手动操作）
     bool m_isPlayCompleted;
     bool m_isVideoPlaying;  // 标记当前是否是在播放视频
+    PlayMode m_playMode;       // 当前播放模式
+    void updatePlayModeIcon(); // 更新播放模式按钮图标
 
     // 支持的音视频格式
     QStringList m_supportedAudioFormats;
