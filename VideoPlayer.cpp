@@ -6,6 +6,10 @@
 #include <QFileInfo>
 #include <QVBoxLayout>
 #include <utility>
+#include <QTime>
+#include <cstdlib>
+#include <ctime>
+#include <QtMath>
 
 VideoPlayer::VideoPlayer(QWidget *parent)
     : QWidget(parent)
@@ -26,7 +30,10 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     ui->musicListView->setModel(m_listModel);
     ui->volumeBar->setVisible(false);
     ui->playBtn->setIcon(QIcon(":/Resource/play.png"));
-    ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_order.png"));
+    updatePlayModeIcon();
+
+    // 初始化随机数种子（仅一次）
+    srand(static_cast<unsigned>(QTime::currentTime().msecsSinceStartOfDay()));
 
     // 初始化支持的音视频格式
     m_supportedAudioFormats << "mp3" << "wav" << "ogg" << "flac" << "aac" << "m4a";
@@ -174,12 +181,15 @@ void VideoPlayer::updatePlayModeIcon()
     switch (m_playMode) {
     case Order:
         ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_order.png"));
+        ui->playModeBtn->setToolTip("顺序播放");
         break;
     case Random:
         ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_random.png"));
+        ui->playModeBtn->setToolTip("随机播放");
         break;
     case RepeatOne:
         ui->playModeBtn->setIcon(QIcon(":/Resource/playlist_repeat.png"));
+        ui->playModeBtn->setToolTip("单曲循环");
         break;
     }
 }
@@ -234,7 +244,7 @@ void VideoPlayer::onMusicListDoubleClicked(const QModelIndex &index)
         m_isVideoPlaying = true;
     }
 
-    qInfo() << "选中播放:" << fileName;
+    qDebug().noquote() << "选中播放:" << fileName.toUtf8().constData();
 }
 
 // 获取当前播放索引
@@ -276,44 +286,128 @@ void VideoPlayer::onPlayModeClicked()
 void VideoPlayer::prevSong()
 {
     int currentIndex = getCurrentSongIndex();
-    if (currentIndex == -1 || m_listModel->rowCount() == 0) return;
+    int rowCount = m_listModel->rowCount();
+    if (currentIndex == -1 || rowCount == 0) return;
 
-    int previousIndex = (currentIndex - 1 + m_listModel->rowCount()) % m_listModel->rowCount();
-    QModelIndex index = m_listModel->index(previousIndex, 0);
+    if (m_playMode == RepeatOne) {
+        // 单曲循环：重播当前
+        QString filePath = m_listModel->index(currentIndex, 0).data(Qt::UserRole + 1).toString();
+        QFileInfo info(filePath);
+        m_mediaPlayer->setPosition(0);
+        m_mediaPlayer->play();
+        if (isVideoFile(filePath)) {
+            m_videoWindow->show();
+            m_isVideoPlaying = true;
+        }
+        m_isPlayCompleted = false;
+        qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
+        return;
+    }
+
+    int newIndex;
+    if (m_playMode == Random) {
+        if (rowCount == 1) {
+            newIndex = currentIndex;  // 仅一首，重播
+        } else {
+            do {
+                newIndex = rand() % rowCount;
+            } while (newIndex == currentIndex);
+        }
+    } else { // Order
+        newIndex = (currentIndex - 1 + rowCount) % rowCount;
+    }
+
+    // 如果随机模式下选中了当前（仅一首的情况），也按重播处理
+    if (newIndex == currentIndex) {
+        QString filePath = m_listModel->index(currentIndex, 0).data(Qt::UserRole + 1).toString();
+        QFileInfo info(filePath);
+        m_mediaPlayer->setPosition(0);
+        m_mediaPlayer->play();
+        if (isVideoFile(filePath)) {
+            m_videoWindow->show();
+            m_isVideoPlaying = true;
+        }
+        m_isPlayCompleted = false;
+        qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
+        return;
+    }
+
+    // 切换到新索引
+    QModelIndex index = m_listModel->index(newIndex, 0);
     QString filePath = index.data(Qt::UserRole + 1).toString();
     QUrl url = QUrl::fromLocalFile(filePath);
-    QFileInfo fileInfo(filePath);
-    QString fileName = fileInfo.fileName();
+    QFileInfo info(filePath);
 
     m_mediaPlayer->setSource(url);
     m_mediaPlayer->play();
-    currentSongIndex = previousIndex;
+    currentSongIndex = newIndex;
     ui->musicListView->setCurrentIndex(index);
-    m_isPlayCompleted = false;  // 重置完成标记
-    qInfo() << "切换到上一项:" << fileName;
+    m_isPlayCompleted = false;
+    qDebug().noquote() << "切换到上一项:" << info.fileName().toUtf8().constData();
 }
 
 // 切换下一项按钮
 void VideoPlayer::nextSong()
 {
     int currentIndex = getCurrentSongIndex();
-    if (currentIndex == -1 || m_listModel->rowCount() == 0) return;
+    int rowCount = m_listModel->rowCount();
+    if (currentIndex == -1 || rowCount == 0) return;
 
-    int nextIndex = (currentIndex + 1) % m_listModel->rowCount();
-    QModelIndex index = m_listModel->index(nextIndex, 0);
+    if (m_playMode == RepeatOne) {
+        // 单曲循环：重播当前
+        QString filePath = m_listModel->index(currentIndex, 0).data(Qt::UserRole + 1).toString();
+        QFileInfo info(filePath);
+        m_mediaPlayer->setPosition(0);
+        m_mediaPlayer->play();
+        if (isVideoFile(filePath)) {
+            m_videoWindow->show();
+            m_isVideoPlaying = true;
+        }
+        m_isPlayCompleted = false;
+        qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
+        return;
+    }
+
+    int newIndex;
+    if (m_playMode == Random) {
+        if (rowCount == 1) {
+            newIndex = currentIndex;
+        } else {
+            do {
+                newIndex = rand() % rowCount;
+            } while (newIndex == currentIndex);
+        }
+    } else { // Order
+        newIndex = (currentIndex + 1) % rowCount;
+    }
+
+    if (newIndex == currentIndex) {
+        QString filePath = m_listModel->index(currentIndex, 0).data(Qt::UserRole + 1).toString();
+        QFileInfo info(filePath);
+        m_mediaPlayer->setPosition(0);
+        m_mediaPlayer->play();
+        if (isVideoFile(filePath)) {
+            m_videoWindow->show();
+            m_isVideoPlaying = true;
+        }
+        m_isPlayCompleted = false;
+        qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
+        return;
+    }
+
+    QModelIndex index = m_listModel->index(newIndex, 0);
     QString filePath = index.data(Qt::UserRole + 1).toString();
     QUrl url = QUrl::fromLocalFile(filePath);
-    QFileInfo fileInfo(filePath);
-    QString fileName = fileInfo.fileName();
+    QFileInfo info(filePath);
 
     m_mediaPlayer->setSource(url);
     m_mediaPlayer->play();
-    currentSongIndex = nextIndex;
+    currentSongIndex = newIndex;
     ui->musicListView->setCurrentIndex(index);
-    m_isPlayCompleted = false;  // 重置完成标记
+    m_isPlayCompleted = false;
 
     if (!m_isAutoSwitch) {
-        qInfo() << "切换到下一项:" << fileName;;
+        qDebug().noquote() << "切换到下一项:" << info.fileName().toUtf8().constData();
     }
 }
 
@@ -326,8 +420,16 @@ void VideoPlayer::toggleVolume()
 // 音量线性转对数
 qreal VideoPlayer::linearToLogVolume(int linearVolume)
 {
-    qreal linear = linearVolume / 100.0;
-    return (linear <= 0.0) ? 0.0 : qPow(10.0, (linear * 2.0) - 2.0);
+    if (linearVolume <= 0)
+        return 0.0;
+
+    if (linearVolume >= 100)
+        return 1.0;
+
+    // 使用1.8次方曲线，使音量变化更自然
+    // 滑块值50时返回约0.28，接近主流播放器的中间音量
+    qreal normalized = linearVolume / 100.0;
+    return qPow(normalized, 1.8);
 }
 
 // 音量条拖动
@@ -389,12 +491,11 @@ void VideoPlayer::autoSwitchToNext()
         break;
 
     case Random:
-        // 随机播放：随机选择一首不同的歌曲
         if (m_listModel->rowCount() > 1) {
-            srand(QTime::currentTime().msecsSinceStartOfDay() % 1000000);
+            // 不再重新设置种子
             do {
                 nextIndex = rand() % m_listModel->rowCount();
-            } while (nextIndex == currentIndex);  // 确保不重复播放当前歌曲
+            } while (nextIndex == currentIndex);
         }
         break;
 
@@ -421,5 +522,5 @@ void VideoPlayer::autoSwitchToNext()
     currentSongIndex = nextIndex;
     m_isAutoSwitch = false;
 
-    qInfo() << "自动切换到:" << fileName;
+    qDebug().noquote() << "自动切换到:" << fileName.toUtf8().constData();
 }
