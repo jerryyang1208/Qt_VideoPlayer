@@ -47,11 +47,23 @@ VideoPlayer::VideoPlayer(QWidget *parent)
         // 不再需要定时器控制
     });
 
+    // 当媒体正常播放结束时，它会自动发出 mediaStatusChanged 信号并且状态为 EndOfMedia，告知播放结束了
     connect(m_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
         if (status == QMediaPlayer::EndOfMedia) {
             // 媒体播放结束时自动切换到下一首
             autoSwitchToNext();
         }
+    });
+
+    // 错误处理：当播放出错时给用户弹出错误提示框
+    connect(m_mediaPlayer, &QMediaPlayer::errorOccurred, this, [this](QMediaPlayer::Error error, const QString &errorString) {
+        QMessageBox::warning(this, "播放错误", QString("无法播放该文件：%1").arg(errorString));
+
+        // 同时在控制台输出错误信息，方便调试
+        qWarning() << "媒体播放器错误：" << error << " - " << errorString;
+
+        // 自动播放下一个文件
+        autoSwitchToNext();
     });
 
     // 其他信号连接
