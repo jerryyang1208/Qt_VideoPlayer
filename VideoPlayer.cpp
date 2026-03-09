@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <QtMath>
+#include <QRandomGenerator>
+#include <QMessageBox>
 
 VideoPlayer::VideoPlayer(QWidget *parent)
     : QWidget(parent)
@@ -310,7 +312,7 @@ void VideoPlayer::prevSong()
             newIndex = currentIndex;  // 仅一首，重播
         } else {
             do {
-                newIndex = rand() % rowCount;
+                newIndex = QRandomGenerator::global()->bounded(rowCount);
             } while (newIndex == currentIndex);
         }
     } else { // Order
@@ -374,7 +376,7 @@ void VideoPlayer::nextSong()
             newIndex = currentIndex;
         } else {
             do {
-                newIndex = rand() % rowCount;
+                newIndex = QRandomGenerator::global()->bounded(rowCount);
             } while (newIndex == currentIndex);
         }
     } else { // Order
