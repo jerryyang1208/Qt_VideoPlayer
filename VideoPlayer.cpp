@@ -7,8 +7,6 @@
 #include <QVBoxLayout>
 #include <utility>
 #include <QTime>
-#include <cstdlib>
-#include <ctime>
 #include <QtMath>
 #include <QRandomGenerator>
 #include <QMessageBox>
@@ -33,9 +31,6 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     ui->volumeBar->setVisible(false);
     ui->playBtn->setIcon(QIcon(":/Resource/play.png"));
     updatePlayModeIcon();
-
-    // 初始化随机数种子（仅一次）
-    srand(static_cast<unsigned>(QTime::currentTime().msecsSinceStartOfDay()));
 
     // 初始化支持的音视频格式
     m_supportedAudioFormats << "mp3" << "wav" << "ogg" << "flac" << "aac" << "m4a";
@@ -496,7 +491,7 @@ void VideoPlayer::autoSwitchToNext()
         if (m_listModel->rowCount() > 1) {
             // 不再重新设置种子
             do {
-                nextIndex = rand() % m_listModel->rowCount();
+                nextIndex = QRandomGenerator::global()->bounded(m_listModel->rowCount());
             } while (nextIndex == currentIndex);
         }
         break;
