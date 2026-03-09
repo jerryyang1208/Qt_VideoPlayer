@@ -20,9 +20,7 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     , m_videoWidget(new QVideoWidget(this))
     , currentSongIndex(-1)
     , m_isAutoSwitch(false)
-    , m_isPlayCompleted(false)
     , m_isVideoPlaying(false)
-    , m_timer(new QTimer(this))
     , m_playMode(Order)
 {
     ui->setupUi(this);
@@ -46,16 +44,17 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     // 播放状态变化更新按钮图标和定时器
     connect(m_mediaPlayer, &QMediaPlayer::playbackStateChanged, this, [this](QMediaPlayer::PlaybackState state) {
         updatePlayButtonIcon(state);
-        if (state == QMediaPlayer::PlayingState) {
-            m_timer->start(1000);      // 播放时每秒检查一次时间
-            m_isPlayCompleted = false; // 播放状态时重置完成标记
-        } else {
-            m_timer->stop();
+        // 不再需要定时器控制
+    });
+
+    connect(m_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
+        if (status == QMediaPlayer::EndOfMedia) {
+            // 媒体播放结束时自动切换到下一首
+            autoSwitchToNext();
         }
     });
 
     // 其他信号连接
-    connect(m_timer, &QTimer::timeout, this, &VideoPlayer::checkPlayCompletion);
     connect(m_mediaPlayer, &QMediaPlayer::durationChanged, this, &VideoPlayer::updateDurationLab);
     connect(m_mediaPlayer, &QMediaPlayer::positionChanged, this, &VideoPlayer::updatePlayDurLab);
 
@@ -232,7 +231,6 @@ void VideoPlayer::onMusicListDoubleClicked(const QModelIndex &index)
     m_mediaPlayer->play();
     ui->musicListView->setCurrentIndex(index);
     currentSongIndex = index.row();
-    m_isPlayCompleted = false;  // 重置完成标记
 
     // 强制检查文件类型并显示视频窗口
     bool isVideo = isVideoFile(filePath);
@@ -296,7 +294,6 @@ void VideoPlayer::prevSong()
             m_videoWindow->show();
             m_isVideoPlaying = true;
         }
-        m_isPlayCompleted = false;
         qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
         return;
     }
@@ -324,7 +321,6 @@ void VideoPlayer::prevSong()
             m_videoWindow->show();
             m_isVideoPlaying = true;
         }
-        m_isPlayCompleted = false;
         qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
         return;
     }
@@ -339,7 +335,6 @@ void VideoPlayer::prevSong()
     m_mediaPlayer->play();
     currentSongIndex = newIndex;
     ui->musicListView->setCurrentIndex(index);
-    m_isPlayCompleted = false;
     qDebug().noquote() << "切换到上一项:" << info.fileName().toUtf8().constData();
 }
 
@@ -360,7 +355,6 @@ void VideoPlayer::nextSong()
             m_videoWindow->show();
             m_isVideoPlaying = true;
         }
-        m_isPlayCompleted = false;
         qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
         return;
     }
@@ -387,7 +381,6 @@ void VideoPlayer::nextSong()
             m_videoWindow->show();
             m_isVideoPlaying = true;
         }
-        m_isPlayCompleted = false;
         qDebug().noquote() << "重播当前项:" << info.fileName().toUtf8().constData();
         return;
     }
@@ -401,7 +394,6 @@ void VideoPlayer::nextSong()
     m_mediaPlayer->play();
     currentSongIndex = newIndex;
     ui->musicListView->setCurrentIndex(index);
-    m_isPlayCompleted = false;
 
     if (!m_isAutoSwitch) {
         qDebug().noquote() << "切换到下一项:" << info.fileName().toUtf8().constData();
@@ -457,20 +449,6 @@ void VideoPlayer::updatePlayDurLab(qint64 position)
 void VideoPlayer::seekPosition(int position)
 {
     m_mediaPlayer->setPosition(position);
-}
-
-// 检查是否播放完成，然后自动切歌
-void VideoPlayer::checkPlayCompletion()
-{
-    // 获取当前播放位置和总时长（用毫秒数比较，更准确）
-    qint64 currentPos = m_mediaPlayer->position();
-    qint64 totalDur = m_mediaPlayer->duration();
-
-    // 完播判定条件：已播放时长 >= 总时长（允许 1 秒误差），且未触发过自动切歌
-    if (currentPos >= totalDur - 1000 && totalDur > 0 && !m_isPlayCompleted) {
-        m_isPlayCompleted = true;  // 标记为已完成，避免重复触发
-        autoSwitchToNext();        // 执行自动切歌
-    }
 }
 
 // 自动切换到下一曲

@@ -46,7 +46,6 @@ private slots:
     void updatePlayDurLab(qint64 position);
     void seekPosition(int position);
     void autoSwitchToNext();
-    void checkPlayCompletion();
     void onCurrentMediaChanged(const QUrl &url); // 处理当前媒体文件变化
     void onPlayModeClicked();  // 播放模式按钮点击切换
 
@@ -59,12 +58,10 @@ private:
     QWidget *m_videoWindow;       // 独立视频窗口
     QSlider* volumeSlider;
     QWidget* volumeWidget; // 用于容纳音量滑块的浮动窗口
-    QTimer* m_timer;       // 用于定时更新进度条
     qreal linearToLogVolume(int linearVolume);
     int currentSongIndex;  // 当前播放歌曲的索引
     int getCurrentSongIndex() const;
     bool m_isAutoSwitch;   // 标记是否为自动切歌（非手动操作）
-    bool m_isPlayCompleted;
     bool m_isVideoPlaying;  // 标记当前是否是在播放视频
     PlayMode m_playMode;       // 当前播放模式
     void updatePlayModeIcon(); // 更新播放模式按钮图标
