@@ -2,12 +2,14 @@
   <a href="README_en.md">English</a>
 </div>
 
-<div align="center">
 ## 基于 Qt 6.8.2 开发的简易音视频播放器
 
+<div align="center">
+  
 ![Qt](https://img.shields.io/badge/Qt-6.8.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
+
 </div>
 
 `Qt_VideoPlayer` 是一款基于 Qt 6.8.2、C++17 开发的简易音视频播放器，目前成功适用于 Qt Creator 环境运行。它旨在提供简洁易用的图形界面，同时展示 Qt 框架与多媒体处理库的结合实践，实际运行界面如下：
