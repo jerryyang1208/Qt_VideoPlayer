@@ -3,18 +3,18 @@
 </div>
 
 <div align="center">
-
 # 🎬 基于 Qt 6.8.2 开发的简易音视频播放器
+</div>
 
 <br> <!-- 增加一个空行间距 -->
 
-![Qt](https://img.shields.io/badge/Qt-6.8.2-brightgreen)
-![C++](https://img.shields.io/badge/C++-17-blue)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
+<div align="center" style="font-size: 24px; line-height: 2.5;">
+  <strong>Qt_6.8.2</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <strong>C++ 17</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <strong>Platform Windows</strong>
+</div>
 
 <br> <!-- 再增加一个空行间距，让徽章与正文分开 -->
-
-</div>
 
 `Qt_VideoPlayer` 是一款基于 Qt 6.8.2、C++17 开发的简易音视频播放器，目前成功适用于 Qt Creator 环境运行。它旨在提供简洁易用的图形界面，同时展示 Qt 框架与多媒体处理库的结合实践，实际运行界面如下：
 
