@@ -3,11 +3,16 @@
 </div>
 
 <div align="center">
+
 # 🎬 基于 Qt 6.8.2 开发的简易音视频播放器
-  
+
+<br> <!-- 增加一个空行间距 -->
+
 ![Qt](https://img.shields.io/badge/Qt-6.8.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
+
+<br> <!-- 再增加一个空行间距，让徽章与正文分开 -->
 
 </div>
 
