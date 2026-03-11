@@ -6,13 +6,9 @@
 
 # 🎬 Simple Audio/Video Player Based on Qt 6.8.2
 
-<br> <!-- Add a blank line spacing -->
-
 ![Qt](https://img.shields.io/badge/Qt-6.8.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
-
-<br> <!-- Add another blank line spacing to separate badges from the main text -->
 
 </div>
 
