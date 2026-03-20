@@ -4,15 +4,16 @@
 
 <div align="center">
 
-# 🎬 Simple Audio/Video Player Based on Qt 6.8.2
+# 🎬 Simple Audio/Video Player Based on Qt 6.10.2
 
-![Qt](https://img.shields.io/badge/Qt-6.8.2-brightgreen)
+![Qt](https://img.shields.io/badge/Qt-6.10.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
+![VS2022](https://img.shields.io/badge/VS2022-17.0-purple)
 
 </div>
 
-`Qt_VideoPlayer` is a simple audio/video player developed based on Qt 6.8.2 and C++17, currently successfully running in the Qt Creator environment. It aims to provide a clean and user-friendly graphical interface while demonstrating the practical integration of the Qt framework with multimedia processing libraries. The actual running interface is as follows:
+`Qt_VideoPlayer` is a simple audio/video player developed based on Qt 6.10.2 and C++17, currently successfully running in the Qt Creator environment. It aims to provide a clean and user-friendly graphical interface while demonstrating the practical integration of the Qt framework with multimedia processing libraries. The actual running interface is as follows:
 
 ![Program Screenshot](Resource/program-run.png)
 
