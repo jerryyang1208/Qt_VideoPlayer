@@ -112,10 +112,18 @@ out/
 - 存放编译生成的中间文件和可执行文件
 - 分离源码和构建产物，保持源码目录整洁，不应提交到 Git（已在 .gitignore 中）
 
-此文件是 VS 2022 成功识别 Qt 项目的关键：
+#### CMakeSettings.json - CMake 配置文件
+
+- 告诉 VS 2022 如何配置 CMake
+- 指定 Qt 的安装路径，定义构建目录结构
+
+#### launch.vs.json - 调试配置文件
+
+- 配置调试时的环境变量
+- 确保运行时能找到 Qt DLL
 
 移植后的完整构建工作流：
-
+<pre>
 1. VS 2022 打开项目
    ↓
 2. 读取 CMakeSettings.json
@@ -143,6 +151,8 @@ out/
    ├── 读取 launch.vs.json
    ├── 设置 PATH 环境变量
    └── 启动 VideoPlayer.exe
+</pre>
+
   
 ## 联系咨询
 
