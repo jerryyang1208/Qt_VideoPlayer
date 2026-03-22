@@ -4,7 +4,7 @@
 
 <div align="center">
 
-# 🎬 A Simple Audio/Video Player Based on Qt 6.10.2
+# 🎬 A Simple Audio Video Player Based on Qt 6.10.2
 
 ![Qt](https://img.shields.io/badge/Qt-6.10.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
@@ -35,6 +35,10 @@ Detailed tutorial documentation: https://zhuanlan.zhihu.com/p/192928973256471063
 - Feature 6: Custom window close event. When closing a playing video window, the play button, audio, progress bar, and time label are synchronized to pause. Clicking the play button again or double-clicking a video file in the list will re-display the window, ensuring the video window appears synchronously with playback operations.
 
 ### Cross-Platform Effects
+
+![程序运行截图](Resource/VS2022-run.png)
+
+> *Program running result under VS 2022 platform (here the generated window is black due to the system's default dark theme, no need to mind this).*
 
 Currently, the project supports use in both Qt Creator and VS 2022 with only configuration files added without modifying core code. The entire build system works as follows:
 
