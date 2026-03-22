@@ -4,7 +4,7 @@
 
 <div align="center">
 
-# 🎬 Simple Audio/Video Player Based on Qt 6.10.2
+# 🎬 A Simple Audio/Video Player Based on Qt 6.10.2
 
 ![Qt](https://img.shields.io/badge/Qt-6.10.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
@@ -13,51 +13,171 @@
 
 </div>
 
-`Qt_VideoPlayer` is a simple audio/video player developed based on Qt 6.10.2 and C++17, currently successfully running in the Qt Creator environment. It aims to provide a clean and user-friendly graphical interface while demonstrating the practical integration of the Qt framework with multimedia processing libraries. The actual running interface is as follows:
+`Qt_VideoPlayer` is a simple audio/video player developed based on Qt 6.10.2 and C++17. It has been successfully ported to the **Visual Studio 2022** development environment while remaining fully compatible with Qt Creator. It aims to provide a clean and user-friendly graphical interface while demonstrating the integration of the Qt framework with multimedia processing libraries. The actual running interface is shown below:
 
 ![Program Screenshot](Resource/program-run.png)
 
-> *Note: This project is primarily intended for personal learning and sharing design ideas related to Qt multimedia development, rather than creating a fully-featured, daily-use player that can replace mature products like VLC or PotPlayer.*
+> *Note: This project is primarily for personal learning and sharing design ideas for Qt multimedia development, rather than building a fully-featured daily player that can replace mature products like VLC or PotPlayer.*
 
-Detailed project introduction documentation: https://zhuanlan.zhihu.com/p/1929289732564710634
+Detailed tutorial documentation: https://zhuanlan.zhihu.com/p/1929289732564710634
 
+---
 
 ## Features
 
-- Feature 1: Implemented basic player UI layout and standardized naming conventions.
-- Feature 2: Reads media files from local folders into a playlist. Double-click to play audio or video, supporting common audio and video formats.
-- Feature 3: Automatically identifies whether the currently playing media is audio or video. When playing audio, the video window is hidden by default. The video window is only displayed when playing video, rendering the output to the window.
-- Feature 4: Implemented playback mode switching logic: auto-switch upon completion (with selectable modes: Repeat One, Sequential Play, Shuffle Play), previous/next track button interaction, and current playlist item highlighting.
-- Feature 5: Enriched button control logic: control media play/pause, volume adjustment, drag the progress bar to change playback position, and display total media duration and current playback progress.
-- Feature 6: Custom window close event handling. When closing a playing video window, the play button, audio, progress bar, and time labels pause simultaneously. Clicking the play button again or double-clicking a video file in the list will redisplay the window, ensuring the video window appears synchronously with playback operations.
+### Basic Functions
 
+- Feature 1: Implement basic player UI layout and standardized naming.
+- Feature 2: Read local folder media files into the player list, double-click to play audio or video, supporting common audio/video formats.
+- Feature 3: Automatically detect whether the currently playing media is audio or video. When playing audio, the video playback window is hidden by default; only when playing video is the window displayed and the current media rendered to the window.
+- Feature 4: Implement button switching logic, including automatic switching after playback (with optional single loop, sequential play, and random play modes), previous/next track button interaction, and highlighting the current playing item in the list.
+- Feature 5: Rich button control logic, including play/pause control, volume adjustment, dragging the progress bar to change playback position, and display of total media duration and current playback progress.
+- Feature 6: Custom window close event. When closing a playing video window, the play button, audio, progress bar, and time label are synchronized to pause. Clicking the play button again or double-clicking a video file in the list will re-display the window, ensuring the video window appears synchronously with playback operations.
+
+### Cross-Platform Effects
+
+Currently, the project supports use in both Qt Creator and VS 2022 with only configuration files added without modifying core code. The entire build system works as follows:
+
+- Qt Creator/VS 2022 as IDE: Provides editing and debugging interface
+- CMake as build system: Cross-platform configuration, one CMakeLists.txt for all
+- Ninja as build tool: Fast compilation
+- MSVC as compiler: Generates Windows executable files
+- Qt as framework: Provides GUI and multimedia functions
+
+Dual IDE development advantages:
+
+- UI Design: Qt Creator's visual designer is more convenient
+- Deep Debugging: VS 2022's diagnostic tools are more powerful
+- Team Collaboration: Supports developers with different IDE preferences to work together
+
+
+---
 
 ## Core Optimizations
 
-To improve code quality, operational efficiency, and user experience, the project has undergone the following three important optimizations:
+To improve code quality, running efficiency, and user experience, the project has undergone three important optimizations:
 
 ### Random Number Generation Optimization
-- **Original Method**: Used C-style `srand`/`rand` to generate random indices, requiring manual seed setting and being non-thread-safe.
-- **Optimized Method**: Uses Qt's `QRandomGenerator::global()->bounded(n)`, eliminating the need for manual initialization.
-- **Improvements**: Simplifies random number usage, is thread-safe with higher quality randomness, and makes the code more compliant with Qt standards.
+- Original method: Used C-style srand/rand to generate random indexes, requiring manual seed setting and not thread-safe.
+- Optimized: Uses Qt's QRandomGenerator::global()->bounded(n), no manual initialization needed.
+- Improvement: Simplifies random number usage, thread-safe with higher quality random numbers, code more compliant with Qt standards.
 
 ### Playback Completion Detection Optimization
-- **Original Method**: Used a timer to poll every second, checking if the playback position was near the total duration (`currentPos >= totalDur - 1000`), which suffered from precision errors and wasted CPU.
-- **Optimized Method**: Listens to the `QMediaPlayer::mediaStatusChanged` signal. When the status becomes `QMediaPlayer::EndOfMedia`, it immediately triggers auto-switch to the next track.
-- **Improvements**: Judgment is more precise and reliable, eliminates polling overhead, and results in cleaner, more elegant code that follows Qt best practices.
+- Original method: Used a timer to poll every second checking if playback position approached total duration (currentPos >= totalDur - 1000), with precision errors and CPU waste.
+- Optimized: Listens to QMediaPlayer::mediaStatusChanged signal, triggering automatic track switching immediately when status changes to QMediaPlayer::EndOfMedia.
+- Improvement: More precise and reliable detection, eliminates polling overhead, cleaner and more elegant code, compliant with Qt standards.
 
 ### Error Handling Optimization
-- **Original Method**: When playback failed (e.g., due to corrupted files or unsupported formats), the program provided no feedback, leaving the user unaware of the issue.
-- **Optimized Method**: Connects to the `errorOccurred` signal. Displays an error message box to inform the user, outputs error information to the console for debugging, and automatically plays the next available file.
-- **Improvements**: Significantly enhances user experience, facilitates debugging, and increases program robustness.
+- Original method: When playback failed (e.g., file corruption, unsupported format), the program gave no prompt, leaving users unaware of the problem.
+- Optimized: Connects errorOccurred signal, pops up error dialog to inform users, outputs error information to console, and automatically plays the next available file.
+- Improvement: Significantly enhances user experience, facilitates debugging, and strengthens program robustness.
 
-  
-## Contact Information
+---
 
-Author's Blog: https://www.zhihu.com/people/13-73-62-89-19
+## Visual Studio 2022 Porting Implementation
 
-Email: 2022280099@email.szu.edu.cn 
+This project has been successfully ported from Qt Creator to the Visual Studio 2022 development environment, using **CMake** as the build system to achieve seamless cross-IDE development experience.
 
-This project will continue to be improved and updated with new features and UI interactions. Feel free to submit issues to share your suggestions for modifications and enhancements!
+### 1. Project Structure
 
-Thank you for your attention and support!
+The complete project directory structure after porting is as follows:
+<pre>
+D:\visual studio\VS_Projects\Qt_VideoPlayer\
+│
+├── .vs/                          # VS 2022 local configuration folder (new)
+├── out/                          # CMake output folder (new)
+├── Resource/                     # Resource files folder
+├── .gitignore                    # Git ignore file configuration
+├── CMakeLists.txt                # CMake main configuration file
+├── CMakeLists.txt.user           # VS user-specific configuration (new)
+├── CMakeSettings.json            # CMake settings configuration (new)
+├── launch.vs.json                # VS debugging configuration (new)
+├── LICENSE                       # License file
+├── main.cpp                      # Program entry
+├── README.md                     # Chinese documentation
+├── README_en.md                  # English documentation
+├── Resource.qrc                  # Qt resource file
+├── VideoPlayer.cpp               # Player implementation
+├── VideoPlayer.h                 # Player header file
+└── VideoPlayer.ui                # Qt UI design file
+</pre>
+
+
+### 2. Core Configuration Files Description
+
+#### .vs/ Folder - Visual Studio Local Configuration
+<pre>
+.vs/
+├── ProjectSettings.json          # Project-level VS settings
+├── VSWorkspaceState.json         # Workspace state
+└── CMakeWorkspaceSettings.json   # CMake workspace settings
+</pre>
+
+- Stores VS 2022 project-specific settings (such as breakpoints, open files, window layout)
+- Each developer's local configuration differs and should not be committed to Git (already in .gitignore)
+
+#### out/ Folder - CMake Build Output
+<pre>
+out/
+├── build/
+│   └── x64-Debug/                # Debug build directory
+│       ├── VideoPlayer.exe       # Executable file
+│       ├── CMakeFiles/           # CMake temporary files
+│       ├── CMakeCache.txt        # CMake cache
+│       └── ...                   # Other build artifacts
+└── install/                      # Installation directory
+    └── x64-Debug/                # Debug installation files
+</pre>
+- Stores compiled intermediate files and executable files
+- Separates source code and build artifacts, keeps source directory clean, should not be committed to Git (already in .gitignore)
+
+#### CMakeSettings.json - CMake Configuration File
+
+- Tells VS 2022 how to configure CMake
+- Specifies Qt installation path, defines build directory structure
+
+#### launch.vs.json - Debug Configuration File
+
+- Configures environment variables for debugging
+- Ensures Qt DLLs can be found at runtime
+
+Complete build workflow after porting:
+<pre>
+1. VS 2022 opens project
+   ↓
+2. Reads CMakeSettings.json
+   ↓
+3. CMake configuration phase
+   ├── Reads CMakeLists.txt
+   ├── Locates Qt path (CMAKE_PREFIX_PATH)
+   ├── Detects MSVC compiler
+   ├── Finds Qt6 components
+   │   ├── Core
+   │   ├── Widgets
+   │   ├── Multimedia
+   │   └── MultimediaWidgets
+   └── Generates Ninja build files to out/build/x64-Debug/
+   ↓
+4. Compilation phase (Ninja)
+   ├── Compiles main.cpp
+   ├── Compiles VideoPlayer.cpp
+   ├── Processes VideoPlayer.ui (uic → ui_VideoPlayer.h)
+   ├── Processes Resource.qrc (rcc → qrc_Resource.cpp)
+   ├── Processes header files (moc → moc_VideoPlayer.cpp)
+   └── Links to generate VideoPlayer.exe
+   ↓
+5. Run/Debug
+   ├── Reads launch.vs.json
+   ├── Sets PATH environment variable
+   └── Launches VideoPlayer.exe
+</pre>
+
+## Contact
+
+Author's blog: https://www.zhihu.com/people/13-73-62-89-19
+
+Email: 2022280099@email.szu.edu.cn
+
+This project will continue to be updated with more new features and UI interactions. Welcome to submit issues sharing suggestions for modifications and improvements!
+
+Thank you for your attention and interest!
