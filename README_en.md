@@ -9,11 +9,10 @@
 ![Qt](https://img.shields.io/badge/Qt-6.10.2-brightgreen)
 ![C++](https://img.shields.io/badge/C++-17-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
-![VS2022](https://img.shields.io/badge/VS2022-17.0-purple)
 
 </div>
 
-`Qt_VideoPlayer` is a simple audio/video player developed based on Qt 6.10.2 and C++17. It has been successfully ported to the **Visual Studio 2022** development environment while remaining fully compatible with Qt Creator. It aims to provide a clean and user-friendly graphical interface while demonstrating the integration of the Qt framework with multimedia processing libraries. The actual running interface is shown below:
+`Qt_VideoPlayer` is a simple audio/video player developed based on Qt 6.10.2 and C++17. Built with the **CMake** build system, it supports seamless development across popular IDEs including **Qt Creator** and **VS Code / Trae**. It aims to provide a clean and user-friendly graphical interface while demonstrating the integration of the Qt framework with multimedia processing libraries. The actual running interface is shown below:
 
 ![Program Screenshot](Resource/program-run.png)
 
@@ -34,25 +33,9 @@ Detailed tutorial documentation: https://zhuanlan.zhihu.com/p/192928973256471063
 - Feature 5: Rich button control logic, including play/pause control, volume adjustment, dragging the progress bar to change playback position, and display of total media duration and current playback progress.
 - Feature 6: Custom window close event. When closing a playing video window, the play button, audio, progress bar, and time label are synchronized to pause. Clicking the play button again or double-clicking a video file in the list will re-display the window, ensuring the video window appears synchronously with playback operations.
 
-### Cross-Platform Effects
+### Multi-IDE Support
 
-![程序运行截图](Resource/VS2022-run.png)
-
-> *Program running result under VS 2022 platform (here the generated window is black due to the system's default dark theme, no need to mind this).*
-
-Currently, the project supports use in both Qt Creator and VS 2022 with only configuration files added without modifying core code. The entire build system works as follows:
-
-- Qt Creator/VS 2022 as IDE: Provides editing and debugging interface
-- CMake as build system: Cross-platform configuration, one CMakeLists.txt for all
-- Ninja as build tool: Fast compilation
-- MSVC as compiler: Generates Windows executable files
-- Qt as framework: Provides GUI and multimedia functions
-
-Dual IDE development advantages:
-
-- UI Design: Qt Creator's visual designer is more convenient
-- Deep Debugging: VS 2022's diagnostic tools are more powerful
-- Team Collaboration: Supports developers with different IDE preferences to work together
+The project is built with CMake, allowing a single codebase to be compiled and run in multiple IDEs such as **Qt Creator** and **VS Code / Trae**. Only the corresponding IDE configuration files are needed — no changes to the core code are required.
 
 
 ---
@@ -76,105 +59,15 @@ To improve code quality, running efficiency, and user experience, the project ha
 - Optimized: Connects errorOccurred signal, pops up error dialog to inform users, outputs error information to console, and automatically plays the next available file.
 - Improvement: Significantly enhances user experience, facilitates debugging, and strengthens program robustness.
 
+### Code Quality & Maintainability Optimization
+- Redundant code cleanup: Removed unused member variables (`volumeSlider`, `volumeWidget`, `m_isVideoPlaying`), unnecessary includes (`QTimer`, `<utility>`), and pure forwarder slot (`seekPosition`), reducing code noise.
+- Duplicate logic consolidation: Merged two symmetric "previous/next song" implementations into `switchSong(int direction)`; encapsulated 5 repeated filename lookups into `currentFileName()`; unified two separate index calculations into `nextIndex(int direction)`.
+- Variable constification: Supported audio/video format lists declared `const`, initialized once in the constructor initializer list, clarifying read-only semantics.
+- Helper function extraction: Extracted small utility functions such as `msToTimeString()` for time formatting, `linearToLogVolume()` for logarithmic volume mapping, and `currentIndex()` for bounds-checked index access — each with a single clear responsibility.
+- Modernized CMake: Replaced manual `AUTOMOC/AUTOUIC/AUTORCC` setup with `qt_standard_project_setup()`, removed dead Qt5 compatibility branches; CMakeLists.txt shrank from 84 lines to ~40 lines.
+- Improvement: VideoPlayer.cpp reduced from 513 lines to ~320 lines (~37% reduction), with clearer logical layering and easier future extensibility.
+
 ---
-
-## Visual Studio 2022 Porting Implementation
-
-This project has been successfully ported from Qt Creator to the Visual Studio 2022 development environment, using **CMake** as the build system to achieve seamless cross-IDE development experience.
-
-### 1. Project Structure
-
-The complete project directory structure after porting is as follows:
-<pre>
-D:\visual studio\VS_Projects\Qt_VideoPlayer\
-│
-├── .vs/                          # VS 2022 local configuration folder (new)
-├── out/                          # CMake output folder (new)
-├── Resource/                     # Resource files folder
-├── .gitignore                    # Git ignore file configuration
-├── CMakeLists.txt                # CMake main configuration file
-├── CMakeLists.txt.user           # VS user-specific configuration (new)
-├── CMakeSettings.json            # CMake settings configuration (new)
-├── launch.vs.json                # VS debugging configuration (new)
-├── LICENSE                       # License file
-├── main.cpp                      # Program entry
-├── README.md                     # Chinese documentation
-├── README_en.md                  # English documentation
-├── Resource.qrc                  # Qt resource file
-├── VideoPlayer.cpp               # Player implementation
-├── VideoPlayer.h                 # Player header file
-└── VideoPlayer.ui                # Qt UI design file
-</pre>
-
-
-### 2. Core Configuration Files Description
-
-#### .vs/ Folder - Visual Studio Local Configuration
-<pre>
-.vs/
-├── ProjectSettings.json          # Project-level VS settings
-├── VSWorkspaceState.json         # Workspace state
-└── CMakeWorkspaceSettings.json   # CMake workspace settings
-</pre>
-
-- Stores VS 2022 project-specific settings (such as breakpoints, open files, window layout)
-- Each developer's local configuration differs and should not be committed to Git (already in .gitignore)
-
-#### out/ Folder - CMake Build Output
-<pre>
-out/
-├── build/
-│   └── x64-Debug/                # Debug build directory
-│       ├── VideoPlayer.exe       # Executable file
-│       ├── CMakeFiles/           # CMake temporary files
-│       ├── CMakeCache.txt        # CMake cache
-│       └── ...                   # Other build artifacts
-└── install/                      # Installation directory
-    └── x64-Debug/                # Debug installation files
-</pre>
-- Stores compiled intermediate files and executable files
-- Separates source code and build artifacts, keeps source directory clean, should not be committed to Git (already in .gitignore)
-
-#### CMakeSettings.json - CMake Configuration File
-
-- Tells VS 2022 how to configure CMake
-- Specifies Qt installation path, defines build directory structure
-
-#### launch.vs.json - Debug Configuration File
-
-- Configures environment variables for debugging
-- Ensures Qt DLLs can be found at runtime
-
-Complete build workflow after porting:
-<pre>
-1. VS 2022 opens project
-   ↓
-2. Reads CMakeSettings.json
-   ↓
-3. CMake configuration phase
-   ├── Reads CMakeLists.txt
-   ├── Locates Qt path (CMAKE_PREFIX_PATH)
-   ├── Detects MSVC compiler
-   ├── Finds Qt6 components
-   │   ├── Core
-   │   ├── Widgets
-   │   ├── Multimedia
-   │   └── MultimediaWidgets
-   └── Generates Ninja build files to out/build/x64-Debug/
-   ↓
-4. Compilation phase (Ninja)
-   ├── Compiles main.cpp
-   ├── Compiles VideoPlayer.cpp
-   ├── Processes VideoPlayer.ui (uic → ui_VideoPlayer.h)
-   ├── Processes Resource.qrc (rcc → qrc_Resource.cpp)
-   ├── Processes header files (moc → moc_VideoPlayer.cpp)
-   └── Links to generate VideoPlayer.exe
-   ↓
-5. Run/Debug
-   ├── Reads launch.vs.json
-   ├── Sets PATH environment variable
-   └── Launches VideoPlayer.exe
-</pre>
 
 ## Contact
 
