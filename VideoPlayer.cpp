@@ -205,7 +205,7 @@ void VideoPlayer::updatePlayModeIcon()
 // 打开音视频文件夹
 void VideoPlayer::openDirectory()
 {
-    auto path = QFileDialog::getExistingDirectory(this, "选择文件夹", "E:/desktop/YXR/Audio_video_tech/QT/Qt_Projects/Media");
+    auto path = QFileDialog::getExistingDirectory(this, "选择文件夹", "D:/YXR/Media/Audio");
     if (path.isEmpty()) return;
 
     // 清空现有列表
