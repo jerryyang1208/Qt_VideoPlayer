@@ -10,7 +10,6 @@
 #include <QVBoxLayout>
 #include <QtMath>
 #include <QDebug>
-#include <utility>
 
 // 初始化流程：UI → 列表/图标 → 支持格式 → 视频窗口 → 媒体播放器 → 信号连接
 VideoPlayer::VideoPlayer(QWidget *parent)
@@ -20,6 +19,8 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     , m_mediaPlayer(new QMediaPlayer(this))
     , m_audioOutput(new QAudioOutput(this))
     , m_videoWidget(new QVideoWidget(this))
+    , m_supportedAudioFormats({"mp3", "wav", "ogg", "flac", "aac", "m4a"})
+    , m_supportedVideoFormats({"mp4", "mkv", "mov", "flv", "avi", "wmv"})
 {
     ui->setupUi(this);
     setWindowTitle(QStringLiteral("音视频播放器"));
@@ -27,9 +28,6 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     ui->volumeBar->setVisible(false);
     ui->playBtn->setIcon(QIcon(QStringLiteral(":/Resource/play.png")));
     updatePlayModeIcon();
-
-    m_supportedAudioFormats << "mp3" << "wav" << "ogg" << "flac" << "aac" << "m4a";
-    m_supportedVideoFormats << "mp4" << "mkv" << "mov" << "flv" << "avi" << "wmv";
 
     initVideoWindow();
 
@@ -62,16 +60,15 @@ VideoPlayer::VideoPlayer(QWidget *parent)
             this, &VideoPlayer::onCurrentMediaChanged);
 
     // ---- 按钮交互 ----
-    connect(ui->openDirBtn,  &QPushButton::clicked, this, &VideoPlayer::openDirectory);
-    connect(ui->playBtn,     &QPushButton::clicked, this, &VideoPlayer::playPause);
-    connect(ui->prevBtn,     &QPushButton::clicked, this, &VideoPlayer::prevSong);
-    connect(ui->nextBtn,     &QPushButton::clicked, this, &VideoPlayer::nextSong);
-    connect(ui->volumeBtn,   &QPushButton::clicked, this, &VideoPlayer::toggleVolume);
-    connect(ui->volumeBar,   &QSlider::sliderMoved, this, &VideoPlayer::adjustVolume);
-    connect(ui->musicListView, &QListView::doubleClicked,
-            this, &VideoPlayer::onMusicListDoubleClicked);
-    connect(ui->playSlider,  &QSlider::sliderMoved, this, &VideoPlayer::seekPosition);
-    connect(ui->playModeBtn, &QPushButton::clicked, this, &VideoPlayer::onPlayModeClicked);
+    connect(ui->openDirBtn,    &QPushButton::clicked,     this, &VideoPlayer::openDirectory);
+    connect(ui->playBtn,       &QPushButton::clicked,     this, &VideoPlayer::playPause);
+    connect(ui->prevBtn,       &QPushButton::clicked,     this, &VideoPlayer::prevSong);
+    connect(ui->nextBtn,       &QPushButton::clicked,     this, &VideoPlayer::nextSong);
+    connect(ui->volumeBtn,     &QPushButton::clicked,     this, &VideoPlayer::toggleVolume);
+    connect(ui->volumeBar,     &QSlider::sliderMoved,     this, &VideoPlayer::adjustVolume);
+    connect(ui->playModeBtn,   &QPushButton::clicked,     this, &VideoPlayer::onPlayModeClicked);
+    connect(ui->musicListView, &QListView::doubleClicked, this, &VideoPlayer::onMusicListDoubleClicked);
+    connect(ui->playSlider,  &QSlider::sliderMoved, m_mediaPlayer, &QMediaPlayer::setPosition);
 }
 
 VideoPlayer::~VideoPlayer()
@@ -156,6 +153,36 @@ int VideoPlayer::currentIndex() const
                ? m_currentIndex : -1;
 }
 
+// 当前播放文件的文件名（供日志用）
+QString VideoPlayer::currentFileName() const
+{
+    return QFileInfo(m_mediaPlayer->source().toLocalFile()).fileName();
+}
+
+// 按当前播放模式算出下一个播放索引
+// direction = +1 下一首，-1 上一首
+// 单曲循环模式始终返回当前索引
+int VideoPlayer::nextIndex(int direction) const
+{
+    const int idx   = currentIndex();
+    const int count = m_listModel->rowCount();
+    if (idx == -1 || count == 0) return -1;
+
+    switch (m_playMode) {
+    case Order:
+        return (idx + direction + count) % count;
+    case RepeatOne:
+        return idx;
+    case Random:
+        if (count <= 1) return idx;
+        int next;
+        do { next = QRandomGenerator::global()->bounded(count); }
+        while (next == idx);
+        return next;
+    }
+    return -1;
+}
+
 // 核心播放入口：设置源 + 更新列表选中 + 自动开始播放
 void VideoPlayer::playAtIndex(int index)
 {
@@ -168,73 +195,43 @@ void VideoPlayer::playAtIndex(int index)
 }
 
 // 「上一首 / 下一首」共用实现
+// 单曲循环或索引未变时重播当前，否则切到下一首
 void VideoPlayer::switchSong(int direction)
 {
-    const int idx   = currentIndex();
-    const int count = m_listModel->rowCount();
-    if (idx == -1 || count == 0) return;
+    const int idx = currentIndex();
+    if (idx == -1) return;
 
-    // 单曲循环 → 重播当前
-    if (m_playMode == RepeatOne) {
-        m_mediaPlayer->setPosition(0);
-        m_mediaPlayer->play();
-        qDebug().noquote() << "重播当前项:"
-                           << QFileInfo(m_mediaPlayer->source().toLocalFile()).fileName();
-        return;
-    }
-
-    // 计算下一个索引
-    int newIdx = idx;
-    if (m_playMode == Random) {
-        if (count > 1) {
-            do { newIdx = QRandomGenerator::global()->bounded(count); }
-            while (newIdx == idx);
-        }
-    } else {
-        newIdx = (idx + direction + count) % count;
-    }
+    const int newIdx = nextIndex(direction);
 
     if (newIdx == idx) {
         m_mediaPlayer->setPosition(0);
         m_mediaPlayer->play();
-        qDebug().noquote() << "重播当前项:"
-                           << QFileInfo(m_mediaPlayer->source().toLocalFile()).fileName();
+        qDebug().noquote() << "重播当前项:" << currentFileName();
         return;
     }
 
     playAtIndex(newIdx);
     qDebug().noquote() << "切换到" << (direction < 0 ? "上一" : "下一") << "项:"
-                       << QFileInfo(m_mediaPlayer->source().toLocalFile()).fileName();
+                       << currentFileName();
 }
 
 void VideoPlayer::prevSong() { switchSong(-1); }
 void VideoPlayer::nextSong() { switchSong(+1); }
 
-// 自动切歌：播放结束或出错时调用，根据播放模式决定下一首
+// 自动切歌：播放结束或出错时调用
 void VideoPlayer::autoSwitchToNext()
 {
-    const int idx   = currentIndex();
-    const int count = m_listModel->rowCount();
-    if (idx == -1 || count == 0) return;
+    const int idx = currentIndex();
+    if (idx == -1) return;
 
-    int nextIdx = idx;
-    switch (m_playMode) {
-    case Order:     nextIdx = (idx + 1) % count; break;
-    case RepeatOne: break;                       // 保持当前索引
-    case Random:
-        if (count > 1) {
-            do { nextIdx = QRandomGenerator::global()->bounded(count); }
-            while (nextIdx == idx);
-        }
-        break;
-    }
+    const int nextIdx = nextIndex(+1);
 
+    // 单曲循环时先 stop 再 play，确保从头播放
     if (m_playMode == RepeatOne)
         m_mediaPlayer->stop();
-    // 单曲循环时先 stop 再 play，确保从头播放
+
     playAtIndex(nextIdx);
-    qDebug().noquote() << "自动切换到:"
-                       << QFileInfo(m_mediaPlayer->source().toLocalFile()).fileName();
+    qDebug().noquote() << "自动切换到:" << currentFileName();
 }
 
 void VideoPlayer::openDirectory()
@@ -247,9 +244,9 @@ void VideoPlayer::openDirectory()
     m_currentIndex = -1;
 
     QStringList filters;
-    for (const QString &fmt : std::as_const(m_supportedAudioFormats))
+    for (const QString &fmt : m_supportedAudioFormats)
         filters << "*." + fmt;
-    for (const QString &fmt : std::as_const(m_supportedVideoFormats))
+    for (const QString &fmt : m_supportedVideoFormats)
         filters << "*." + fmt;
 
     QDirIterator it(path, filters);
@@ -265,13 +262,12 @@ void VideoPlayer::openDirectory()
 void VideoPlayer::onMusicListDoubleClicked(const QModelIndex &index)
 {
     playAtIndex(index.row());
-    qDebug().noquote() << "选中播放:"
-                       << QFileInfo(m_mediaPlayer->source().toLocalFile()).fileName();
+    qDebug().noquote() << "选中播放:" << currentFileName();
 }
 
 void VideoPlayer::playPause()
 {
-    if (m_listModel->rowCount() == 0 || m_currentIndex == -1) return;
+    if (currentIndex() == -1) return;
 
     if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState)
         m_mediaPlayer->pause();
@@ -284,8 +280,6 @@ void VideoPlayer::onPlayModeClicked()
     m_playMode = static_cast<PlayMode>((m_playMode + 1) % 3);
     updatePlayModeIcon();
 }
-
-void VideoPlayer::seekPosition(int position) { m_mediaPlayer->setPosition(position); }
 
 void VideoPlayer::toggleVolume()
 {
