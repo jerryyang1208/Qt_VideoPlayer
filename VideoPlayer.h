@@ -36,7 +36,6 @@ private slots:
     void prevSong();                       // 上一首
     void nextSong();                       // 下一首
     void playPause();                      // 播放/暂停切换
-    void seekPosition(int position);       // 拖动进度条跳转
     void autoSwitchToNext();               // 播放结束自动切歌
     void onPlayModeClicked();              // 切换播放模式
 
@@ -58,6 +57,8 @@ private:
 
     bool isVideoFile(const QString &filePath) const;  // 判断是否为视频文件
     int  currentIndex() const;                        // 当前播放索引（带边界校验）
+    int  nextIndex(int direction) const;              // 按当前播放模式算出下一个索引
+    QString currentFileName() const;                  // 当前播放文件的文件名
     static qreal linearToLogVolume(int linearVolume); // 线性音量 0-100 转对数音量 0.0-1.0
 
     Ui::VideoPlayer *ui;
@@ -70,8 +71,8 @@ private:
     int       m_currentIndex = -1;      // 当前播放索引，-1 表示未播放
     PlayMode  m_playMode     = Order;   // 当前播放模式
 
-    QStringList m_supportedAudioFormats; // 支持的音频扩展名
-    QStringList m_supportedVideoFormats; // 支持的视频扩展名
+    const QStringList m_supportedAudioFormats; // 支持的音频扩展名
+    const QStringList m_supportedVideoFormats; // 支持的视频扩展名
 };
 
 #endif // VIDEOPLAYER_H
