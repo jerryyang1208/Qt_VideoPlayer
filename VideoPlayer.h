@@ -6,6 +6,7 @@
 #include <QVideoWidget>
 #include <QStandardItemModel>
 #include <QWidget>
+#include <QLabel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class VideoPlayer; }
@@ -41,13 +42,18 @@ private slots:
 
     // —— 音量 ——
     void toggleVolume();                   // 显示/隐藏音量条
+    void toggleMute();                     // 静音切换（快捷键 M）
     void adjustVolume(int value);          // 调节音量（线性转对数）
+
+    // —— 快捷键 ——
+    void toggleFullscreen();               // 视频窗口全屏切换（快捷键 F）
 
     // —— UI 更新 ——
     void updatePlayButtonIcon(QMediaPlayer::PlaybackState state);
     void updateDurationLab(qint64 duration);     // 更新总时长
     void updatePlayDurLab(qint64 position);      // 更新当前进度
     void onCurrentMediaChanged(const QUrl &url); // 媒体切换时显示/隐藏视频窗口
+    void updateCoverArt();                       // 加载音频封面图
 
 private:
     void initVideoWindow();           // 初始化独立视频窗口
@@ -59,17 +65,19 @@ private:
     int  currentIndex() const;                        // 当前播放索引（带边界校验）
     int  nextIndex(int direction) const;              // 按当前播放模式算出下一个索引
     QString currentFileName() const;                  // 当前播放文件的文件名
-    static qreal linearToLogVolume(int linearVolume); // 线性音量 0-100 转对数音量 0.0-1.0
+    static qreal linearToLogVolume(int linearVolume); // 线性滑块值 0-100 转感知音量 0.0-1.0（幂律曲线）
 
     Ui::VideoPlayer *ui;
     QStandardItemModel *m_listModel;    // 播放列表数据模型
     QMediaPlayer       *m_mediaPlayer;  // 媒体播放器
     QAudioOutput       *m_audioOutput;  // 音频输出
     QVideoWidget       *m_videoWidget;  // 视频显示控件
+    QLabel             *m_coverLabel = nullptr;   // 音频封面图显示
     QWidget            *m_videoWindow = nullptr;  // 独立视频窗口
 
     int       m_currentIndex = -1;      // 当前播放索引，-1 表示未播放
     PlayMode  m_playMode     = Order;   // 当前播放模式
+    int       m_errorSwitchCount = 0;   // 连续错误切歌计数，防止死循环
 
     const QStringList m_supportedAudioFormats; // 支持的音频扩展名
     const QStringList m_supportedVideoFormats; // 支持的视频扩展名
