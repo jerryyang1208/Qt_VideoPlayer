@@ -2,10 +2,15 @@
 #include "ui_VideoPlayer.h"
 
 #include <QDirIterator>
+#include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QKeyEvent>
+#include <QMediaMetaData>
 #include <QMessageBox>
+#include <QPixmap>
 #include <QRandomGenerator>
+#include <QShortcut>
 #include <QTime>
 #include <QVBoxLayout>
 #include <QtMath>
@@ -28,6 +33,7 @@ VideoPlayer::VideoPlayer(QWidget *parent)
     ui->volumeBar->setVisible(false);
     ui->playBtn->setIcon(QIcon(QStringLiteral(":/Resource/play.png")));
     updatePlayModeIcon();
+    adjustVolume(ui->volumeBar->value());  // 初始化音量（滑块默认 100 = 最大音量）
 
     initVideoWindow();
 
@@ -49,6 +55,13 @@ VideoPlayer::VideoPlayer(QWidget *parent)
                 QMessageBox::warning(this, QStringLiteral("播放错误"),
                                      QStringLiteral("无法播放该文件：%1").arg(errorString));
                 qWarning().noquote() << "媒体播放器错误：" << error << "-" << errorString;
+
+                // 连续错误超过列表长度则停止，避免所有文件都损坏时死循环
+                if (++m_errorSwitchCount >= m_listModel->rowCount()) {
+                    qWarning() << "连续错误已达上限，停止自动切歌";
+                    m_errorSwitchCount = 0;
+                    return;
+                }
                 autoSwitchToNext();
             });
 
@@ -58,6 +71,14 @@ VideoPlayer::VideoPlayer(QWidget *parent)
             this, &VideoPlayer::updatePlayDurLab);
     connect(m_mediaPlayer, &QMediaPlayer::sourceChanged,
             this, &VideoPlayer::onCurrentMediaChanged);
+    connect(m_mediaPlayer, &QMediaPlayer::metaDataChanged,
+            this, &VideoPlayer::updateCoverArt);
+
+    // ---- 快捷键 ----
+    auto *muteShortcut = new QShortcut(QKeySequence(Qt::Key_M), this);
+    connect(muteShortcut, &QShortcut::activated, this, &VideoPlayer::toggleMute);
+    auto *fsShortcut = new QShortcut(QKeySequence(Qt::Key_F), this);
+    connect(fsShortcut, &QShortcut::activated, this, &VideoPlayer::toggleFullscreen);
 
     // ---- 按钮交互 ----
     connect(ui->openDirBtn,    &QPushButton::clicked,     this, &VideoPlayer::openDirectory);
@@ -79,6 +100,7 @@ VideoPlayer::~VideoPlayer()
     // 手动销毁视频组件，确保在父对象析构前释放 D3D 资源
     m_videoWidget->setParent(nullptr);
     delete m_videoWidget;
+    delete m_videoWindow;
     delete ui;
 }
 
@@ -88,9 +110,17 @@ void VideoPlayer::initVideoWindow()
     m_videoWindow->setWindowTitle(QStringLiteral("VideoPlayer"));
     m_videoWindow->resize(800, 600);
 
+    // 封面图显示标签（音频播放时显示，视频播放时隐藏）
+    m_coverLabel = new QLabel(m_videoWindow);
+    m_coverLabel->setAlignment(Qt::AlignCenter);
+    m_coverLabel->setScaledContents(true);
+    m_coverLabel->setStyleSheet(QStringLiteral("background-color: black;"));
+    m_coverLabel->hide();
+
     auto *layout = new QVBoxLayout(m_videoWindow);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_videoWidget);
+    layout->addWidget(m_coverLabel);
 
     m_videoWindow->installEventFilter(this);
     m_videoWindow->hide();
@@ -98,13 +128,31 @@ void VideoPlayer::initVideoWindow()
 
 bool VideoPlayer::eventFilter(QObject *watched, QEvent *event)
 {
-    if (watched == m_videoWindow && event->type() == QEvent::Close) {
+    if (watched != m_videoWindow)
+        return QWidget::eventFilter(watched, event);
+
+    // 视频窗口关闭 → 隐藏而非销毁
+    if (event->type() == QEvent::Close) {
         event->ignore();
         m_videoWindow->hide();
         if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState)
             m_mediaPlayer->pause();
         return true;
     }
+
+    // 视频窗口按键：F 全屏切换 / ESC 退出全屏
+    if (event->type() == QEvent::KeyPress) {
+        auto *ke = static_cast<QKeyEvent *>(event);
+        if (ke->key() == Qt::Key_F) {
+            toggleFullscreen();
+            return true;
+        }
+        if (ke->key() == Qt::Key_Escape && m_videoWindow->isFullScreen()) {
+            m_videoWindow->showNormal();
+            return true;
+        }
+    }
+
     return QWidget::eventFilter(watched, event);
 }
 
@@ -116,9 +164,22 @@ bool VideoPlayer::isVideoFile(const QString &filePath) const
 
 void VideoPlayer::onCurrentMediaChanged(const QUrl &url)
 {
-    if (!url.isEmpty())
-        isVideoFile(url.toLocalFile()) ? m_videoWindow->show()
-                                       : m_videoWindow->hide();
+    if (url.isEmpty()) {
+        m_videoWindow->hide();
+        return;
+    }
+
+    if (isVideoFile(url.toLocalFile())) {
+        // 视频：显示视频控件，隐藏封面
+        m_videoWidget->show();
+        m_coverLabel->hide();
+    } else {
+        // 音频：显示封面标签，隐藏视频控件，尝试加载封面
+        m_videoWidget->hide();
+        m_coverLabel->show();
+        updateCoverArt();
+    }
+    m_videoWindow->show();
 }
 
 void VideoPlayer::updatePlayButtonIcon(QMediaPlayer::PlaybackState state)
@@ -188,7 +249,13 @@ void VideoPlayer::playAtIndex(int index)
 {
     const QString filePath = m_listModel->index(index, 0)
                                  .data(Qt::UserRole + 1).toString();
+    if (filePath.isEmpty()) {
+        qWarning() << "播放失败：索引" << index << "对应的文件路径为空";
+        return;
+    }
+
     m_currentIndex = index;
+    m_errorSwitchCount = 0;  // 正常播放时重置错误计数
     ui->musicListView->setCurrentIndex(m_listModel->index(index, 0));
     m_mediaPlayer->setSource(QUrl::fromLocalFile(filePath));
     m_mediaPlayer->play();
@@ -237,9 +304,11 @@ void VideoPlayer::autoSwitchToNext()
 void VideoPlayer::openDirectory()
 {
     const QString path = QFileDialog::getExistingDirectory(
-        this, QStringLiteral("选择文件夹"), "D:/YXR/Media/Audio");
+        this, QStringLiteral("选择文件夹"), QDir::homePath());
     if (path.isEmpty()) return;
 
+    m_mediaPlayer->stop();
+    m_mediaPlayer->setSource(QUrl());
     m_listModel->clear();
     m_currentIndex = -1;
 
@@ -269,10 +338,13 @@ void VideoPlayer::playPause()
 {
     if (currentIndex() == -1) return;
 
-    if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState)
+    if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState) {
         m_mediaPlayer->pause();
-    else
+    } else {
+        // 恢复播放时确保窗口可见（用户可能之前手动关闭了窗口）
+        m_videoWindow->show();
         m_mediaPlayer->play();
+    }
 }
 
 void VideoPlayer::onPlayModeClicked()
@@ -286,6 +358,48 @@ void VideoPlayer::toggleVolume()
     ui->volumeBar->setVisible(!ui->volumeBar->isVisible());
 }
 
+// 静音切换（快捷键 M）
+void VideoPlayer::toggleMute()
+{
+    const bool muted = !m_audioOutput->isMuted();
+    m_audioOutput->setMuted(muted);
+    ui->volumeBtn->setToolTip(muted ? QStringLiteral("已静音") : QStringLiteral("音量"));
+    qDebug().noquote() << (muted ? "已静音" : "已取消静音");
+}
+
+// 视频窗口全屏切换（快捷键 F）
+void VideoPlayer::toggleFullscreen()
+{
+    if (!m_videoWindow || m_videoWindow->isHidden())
+        return;
+
+    if (m_videoWindow->isFullScreen())
+        m_videoWindow->showNormal();
+    else
+        m_videoWindow->showFullScreen();
+}
+
+// 读取音频文件内嵌封面图并显示
+void VideoPlayer::updateCoverArt()
+{
+    if (!m_coverLabel || isVideoFile(m_mediaPlayer->source().toLocalFile()))
+        return;
+
+    // 尝试从元数据中获取封面图（优先 CoverArtImage，其次 ThumbnailImage）
+    const QMediaMetaData meta = m_mediaPlayer->metaData();
+    QImage image = meta.value(QMediaMetaData::CoverArtImage).value<QImage>();
+    if (image.isNull())
+        image = meta.value(QMediaMetaData::ThumbnailImage).value<QImage>();
+
+    if (!image.isNull()) {
+        m_coverLabel->setPixmap(QPixmap::fromImage(image));
+        qDebug().noquote() << "封面图已加载:" << currentFileName();
+    } else {
+        m_coverLabel->setText(QStringLiteral("无封面"));
+    }
+}
+
+// 线性滑块值 → 感知音量：幂律曲线近似人耳非线性响度感知
 qreal VideoPlayer::linearToLogVolume(int linearVolume)
 {
     if (linearVolume <= 0)   return 0.0;
